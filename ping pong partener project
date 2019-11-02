@@ -1,0 +1,128 @@
+let video;
+let yolo;
+let status;
+let objects = [];
+
+var xBall = Math.floor(Math.random() * 300) + 50;
+var yBall = 50;
+var xSpeed = (2, 7);
+var ySpeed = (-7, -2);
+var score1 = 0;
+var score2 = 0;
+var leftpaddleheight = 0;
+var rightpaddleheight = 0;
+
+
+function setup() {
+  createCanvas(400, 400);
+  video = createCapture(VIDEO);
+  video.size(400, 400);
+
+  // Create a YOLO method
+  yolo = ml5.YOLO(video, startDetecting);
+
+  // Hide the original video
+  video.hide();
+  status = select('#status');
+}
+
+
+
+function draw() {
+   
+  // Mirror Video
+  translate(video.width, 0);
+  scale(-1, 1);
+  image(video, 0, 0, width, height);
+ 
+  // Detects if PERSON is on left or right & PADDLES
+  for (let i = 0; i < objects.length; i++) {
+    noStroke();
+   
+    if (objects[i].label == 'person') {
+       // Paddle
+      rightpaddleheight = 400*objects[i].y;
+    }
+    
+    if (objects[i].label == 'phone') {
+       // Paddle
+      leftpaddleheight = 400*objects[i].y;
+    }
+    
+  fill('#ffffff');
+  rect(0,leftpaddleheight,15,50 );
+  rect(385,rightpaddleheight,15,50 );
+  //Functions
+  move();
+  display();
+  bounce();
+  //resetBall();
+  paddle1();
+  paddle2();
+
+  //Score
+  fill('#d9c3f7');
+  textSize(24);
+  text("Score1: " + score1, 10, 25);
+  text("Score2: " + score2, 275, 25);
+
+  }
+}
+
+  // Ball Functions
+function move() {
+  xBall += xSpeed;
+  yBall += ySpeed;
+}
+
+
+function bounce() {
+
+  if (xBall < 10 ||
+    xBall > 400 - 10) {
+    xSpeed *= -1;
+  }
+  if (yBall < 10 ||
+    yBall > 400 - 10) {
+    ySpeed *= -1;
+  }
+}
+
+function display() {
+  fill('#d9c3f7');
+  ellipse(xBall, yBall, 20, 20);
+}
+
+// Bounce off Paddle
+function paddle1() {
+  if (( xBall < 26) &&
+    (yBall >= leftpaddleheight && yBall <= leftpaddleheight + 50)) {
+    xSpeed *= -1;
+    //ySpeed *= -1;
+    score1++;
+
+  }
+}
+
+function paddle2() {
+  if (( xBall >= 373) &&
+    (yBall >= rightpaddleheight && yBall <= rightpaddleheight + 50)) {
+    xSpeed *= -1;
+    //ySpeed *= -1;
+    score2++;
+
+  }
+}
+  
+
+function startDetecting() {
+  status.html('Loaded.');
+  detect();
+}
+
+function detect() {
+  yolo.detect(function(err, results) {
+    objects = results;
+    detect();
+  })
+}
